@@ -6,7 +6,7 @@
 
 uint8_t own_addr_type;
 
-void set_random_addr(void)
+void set_public_addr(void)
 {
     printf("Fetching Device Address\n");
     int err = ble_hs_util_ensure_addr(0);
@@ -31,6 +31,20 @@ void set_random_addr(void)
     }
 }
 
+static void set_random_addr(void)
+{
+    ble_addr_t addr;
+    int rc;
+
+    rc = ble_hs_id_gen_rnd(1, &addr);
+    assert(rc == 0);
+
+    rc = ble_hs_id_set_rnd(addr.val);
+    assert(rc == 0);
+    own_addr_type = BLE_OWN_ADDR_RANDOM;
+}
+
+
 void beacon_advertise(void)
 {
     struct ble_gap_adv_params adv_params;
@@ -52,12 +66,18 @@ void beacon_advertise(void)
     assert(rc == 0);
 }
 
+bool random_addr = true;
 
 static void
 ble_app_on_sync(void)
 {
     /* Advertise indefinitely. */
-    set_random_addr();
+    if(random_addr){
+        set_random_addr();
+    }else{
+        set_public_addr();
+    }
+
     beacon_advertise();
 }
 
